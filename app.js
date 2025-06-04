@@ -5,6 +5,7 @@ const logger = require('morgan');
 const app = express();
 const db = require('./config/db');
 const indexRouter = require('./routes/index');
+const newsRoutes = require('./routes/newsRoutes');
 
 app.use(express.json());
 
@@ -22,6 +23,7 @@ async function start() {
     await db.initialize();
 
     app.use('/', indexRouter);
+    app.use('/',newsRoutes);
 }
 
 start().then(r => {
