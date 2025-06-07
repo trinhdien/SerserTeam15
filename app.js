@@ -6,7 +6,9 @@ const app = express();
 const db = require('./config/db');
 const indexRouter = require('./routes/index');
 const newsRoutes = require('./routes/newsRoutes');
-
+const {json, urlencoded} = require("express");
+app.use(json({ limit: '50mb' }));
+app.use(urlencoded({ limit: '50mb', extended: true }));
 app.use(express.json());
 
 // view engine setup
