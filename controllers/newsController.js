@@ -20,7 +20,7 @@ async function getAllNews(req, res) {
         const newsList = newsResult.rows;
 
         if (newsList.length === 0) {
-            return res.status(404).json({message: "Không có bản ghi"});
+            return res.status(404).json({ message: "Không có bản ghi" });
         }
 
         const roomIds = newsList.map(n => n.ROOM_NEWS_ID);
@@ -35,14 +35,16 @@ async function getAllNews(req, res) {
             outFormat: oracledb.OBJECT
         });
 
-        // 3. Map ảnh theo room_news_id
+        // 3. Map mỗi ROOM_NEWS_ID với 1 ảnh đầu tiên
         const imageMap = {};
-        const roomId = imageResult.rows[0].ROOM_NEWS_ID;
-        const clob = imageResult.rows[0].IMAGE_URL;
-        const imageContent = await readClob(clob); // Đọc CLOB
-
-        if (!imageMap[roomId]) imageMap[roomId] = [];
-        imageMap[roomId].push(imageContent);
+        for (const row of imageResult.rows) {
+            const roomId = row.ROOM_NEWS_ID;
+            if (!imageMap[roomId]) { // Chỉ lấy ảnh đầu tiên nếu chưa có
+                const clob = row.IMAGE_URL;
+                const imageContent = await readClob(clob); // Hàm đọc CLOB từ Oracle
+                imageMap[roomId] = [imageContent];
+            }
+        }
 
         // 4. Gắn ảnh vào từng bản tin
         const resultWithImages = newsList.map(news => ({
@@ -58,7 +60,7 @@ async function getAllNews(req, res) {
 
     } catch (e) {
         console.error("❌ Error:", e);
-        res.status(500).json({message: "Lỗi máy chủ"});
+        res.status(500).json({ message: "Lỗi máy chủ" });
     } finally {
         if (connection) await connection.close();
     }
@@ -76,7 +78,7 @@ async function getDetailNews(req, res) {
         const sql = `
             SELECT r.*, c.phone
             FROM RENT_ROOM_NEWS r
-            JOIN CUSTOMER c ON r.customer_id = c.customer_id
+                     JOIN CUSTOMER c ON r.customer_id = c.customer_id
             WHERE room_news_id = :newsId
         `;
         const result = await connection.execute(sql, [newsId], {
